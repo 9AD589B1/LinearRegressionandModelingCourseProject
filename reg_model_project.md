@@ -1,7 +1,7 @@
 ---
 title: "Linear Modeling and Prediction for Movies"
 author: "David Kochar"
-date: '2018-01-22'
+date: '2018-01-23'
 output: 
   html_document: 
     keep_md: true
@@ -50,7 +50,7 @@ Install and load required libraries if neccessary.
 ```r
 #Check installed status of requried packages, and install if necessary
 list.of.packages <-
-  c("statsr", "dplyr", "ggplot2", "scales", "kableExtra")
+  c("statsr", "dplyr", "ggplot2", "scales", "kableExtra", "olsrr")
 new.packages <-
   list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]
 if (length(new.packages))
@@ -60,6 +60,7 @@ suppressWarnings (suppressMessages (library (dplyr)))
 suppressWarnings (suppressMessages (library (ggplot2)))
 suppressWarnings (suppressMessages (library (scales)))
 suppressWarnings (suppressMessages (library (kableExtra)))
+suppressWarnings (suppressMessages (library (olsrr)))
 ```
 
 ### Load data
@@ -85,24 +86,10 @@ Since simple random sampling was used, we know that each population observation 
 
 ## Part 2: Research question
 
-We will research the association and predictive value between the response variable "Audience Score on Rotten Tomatoes," and these explanatory variables:
-
-* Critics score on Rotten Tomatoes
-* Critics rating on Rotten Tomatoes (Certified Fresh, Fresh, Rotten)
-* MPAA rating of the movie (G, PG, PG-13, R, Unrated)
-* Genre of movie (Action & Adventure, Comedy, Documentary, Drama, Horror, Mystery & Suspense, Other)
-* Rating on IMDB
-* Runtime of movie (in minutes)
-* Whether or not the movie was nominated for a best picture Oscar (no, yes)
-* Whether or not the movie won a best picture Oscar (no, yes)
-* Whether or not one of the main actors in the movie ever won an Oscar (no, yes)
-* Whether or not one of the main actresses in the movie ever won an Oscar (no, yes)
-* Whether or not the director of the movie ever won an Oscar (no, yes)
-* Whether or not the movie is in the Top 200 Box Office list on BoxOfficeMojo (no, yes)
+We will research the association and predictive value between the response variable "Audience Score on Rotten Tomatoes," and multiple explanatory variables to build a multiple linear regression model. Variable selection criteria will be covered in Part 4: Modeling. Note the explanatory variables used in the model were selected based on their contextual relevance.
 
 The "Audience score on Rotten Tomatoes" variable as a response is of interest because Rotten Tomatoes is more of a "popularity" score generator based on likes and dislikes, and as percentage score, this metric is easily digested. So, as a very simplified and condensed metric, uncovering any meaningful relationships will be interesting.
 
-The explanatory variables were selected based on understanding different scoring methodologies, and also understanding the influence of perceptual bias, e.g. would a long runtime bore the audience and negatively affect ratings? The remaining variables were not included as they would not lend themselves to modeling. Exclusion details will be included in the "Modeling" section of the analysis.
 
 * * *
 
@@ -548,14 +535,231 @@ AudienceScoreSummaryGenre %>%
 </tbody>
 </table>
 
+The "Drama" genre had the highest number of observations, and also had the 4th largest mean Audience score. This is helping to shift our global average.
 
 * * *
 
 ## Part 4: Modeling
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button above. Make sure that your code is visible in the project you submit. 
-Delete this note when before you submit your work.
+As mentioned in Part 2, the "Audience Score on Rotten Tomatoes" (audience_score) is our dependent variable. The below explanatory variables will be excluded from modeling because in terms of dimensional richness, they offer no meaningful information gain or add model noise because they are very high-cardinality (unique). For example, the "Link to Rotten Tomatoes page for the movie" variable would have virtually no model value due to its tangential nature and it's high-cardinality - in other words, a URL has no domain context from a decision making perspective.
+
+* Title of movie
+* Studio that produced the movie
+* Year the movie is released in theaters
+* Day of the month the movie is released in theaters
+* Year the movie is released on DVD
+* Day of the month the movie is released on DVD
+* Number of votes on IMDB
+* Director of the movie
+* First main actor/actress in the abridged cast of the movie
+* Second main actor/actress in the abridged cast of the movie
+* Third main actor/actress in the abridged cast of the movie
+* Fourth main actor/actress in the abridged cast of the movie
+* Fifth main actor/actress in the abridged cast of the movie
+* Link to IMDB page for the movie
+* Link to Rotten Tomatoes page for the movie
+
+The below explanatory variables will be included in our modeling as they offer the most information gain potential and dimensional richness.
+
+* Type of movie (Documentary, Feature Film, TV Movie)
+* Critics score on Rotten Tomatoes
+* Critics rating on Rotten Tomatoes (Certified Fresh, Fresh, Rotten)
+* MPAA rating of the movie (G, PG, PG-13, R, Unrated)
+* Genre of movie (Action & Adventure, Comedy, Documentary, Drama, Horror, Mystery & Suspense, Other)
+* Month the movie is released in theaters
+* Month the movie is released on DVD
+* Rating on IMDB
+* Runtime of movie (in minutes)
+* Whether or not the movie was nominated for a best picture Oscar (no, yes)
+* Whether or not the movie won a best picture Oscar (no, yes)
+* Whether or not one of the main actors in the movie ever won an Oscar (no, yes)
+* Whether or not one of the main actresses in the movie ever won an Oscar (no, yes)
+* Whether or not the director of the movie ever won an Oscar (no, yes)
+* Whether or not the movie is in the Top 200 Box Office list on BoxOfficeMojo (no, yes)
+
+To build our mulitple linear regression model, we will use stepwise forward selection via the "ols_step_forward" function from the "olsrr" R package. The function will build the model from our set of explanatory variables by entering predictors based on p-values in a stepwise manner. The first variable to be added to the model is most the significant, and more variables are included until none of remaining variables are "significant" when added to the model.
+
+Compared to stepwise backward selection, stepwise forward selection was used for its low computational resource requirements and thus ease of reproducibility. It is worth noting the forward selection key disadvantage, such that each addition of a new variable may undermine the significance of variables already in the model.
+
+Let's run the model.
+
+
+```r
+#create the list of predictor coefficients
+MultiRegression1 <- lm(
+  audience_score ~ title_type +
+  genre +
+  runtime +
+  mpaa_rating +
+  thtr_rel_month +
+  dvd_rel_month +
+  imdb_rating +
+  critics_rating +
+  critics_score +
+  best_pic_nom +
+  best_pic_win +
+  best_actor_win +
+  best_actress_win +
+  best_dir_win +
+  top200_box,
+  data = movies
+  )
+
+#generate the multi-regression model  
+ols_step_forward (MultiRegression1, details = TRUE)
+```
+
+```
+## Variable Selection Procedure
+##  Dependent Variable: audience_score 
+## 
+##  Forward Selection: Step 1 
+## 
+##  Variable imdb_rating Entered 
+## 
+##                          Model Summary                          
+## ---------------------------------------------------------------
+## R                       0.865       RMSE                10.160 
+## R-Squared               0.748       Coef. Var           16.291 
+## Adj. R-Squared          0.748       MSE                103.219 
+## Pred R-Squared          0.745       MAE                  7.742 
+## ---------------------------------------------------------------
+##  RMSE: Root Mean Square Error 
+##  MSE: Mean Square Error 
+##  MAE: Mean Absolute Error 
+## 
+##                                   ANOVA                                   
+## -------------------------------------------------------------------------
+##                   Sum of                                                 
+##                  Squares         DF    Mean Square       F          Sig. 
+## -------------------------------------------------------------------------
+## Regression    198831.499          1     198831.499    1926.312    0.0000 
+## Residual       66988.946        649        103.219                       
+## Total         265820.445        650                                      
+## -------------------------------------------------------------------------
+## 
+##                                     Parameter Estimates                                      
+## --------------------------------------------------------------------------------------------
+##       model       Beta    Std. Error    Std. Beta       t        Sig       lower      upper 
+## --------------------------------------------------------------------------------------------
+## (Intercept)    -42.328         2.418                 -17.503    0.000    -47.077    -37.580 
+## imdb_rating     16.123         0.367        0.865     43.890    0.000     15.402     16.845 
+## --------------------------------------------------------------------------------------------
+## 
+## 
+## Forward Selection: Step 2 
+## 
+##  Variable critics_score Entered 
+## 
+##                          Model Summary                          
+## ---------------------------------------------------------------
+## R                       0.867       RMSE                10.079 
+## R-Squared               0.752       Coef. Var           16.162 
+## Adj. R-Squared          0.752       MSE                101.581 
+## Pred R-Squared          0.749       MAE                  7.702 
+## ---------------------------------------------------------------
+##  RMSE: Root Mean Square Error 
+##  MSE: Mean Square Error 
+##  MAE: Mean Absolute Error 
+## 
+##                                  ANOVA                                   
+## ------------------------------------------------------------------------
+##                   Sum of                                                
+##                  Squares         DF    Mean Square       F         Sig. 
+## ------------------------------------------------------------------------
+## Regression    199995.983          2      99997.991    984.417    0.0000 
+## Residual       65824.463        648        101.581                      
+## Total         265820.445        650                                     
+## ------------------------------------------------------------------------
+## 
+##                                      Parameter Estimates                                       
+## ----------------------------------------------------------------------------------------------
+##         model       Beta    Std. Error    Std. Beta       t        Sig       lower      upper 
+## ----------------------------------------------------------------------------------------------
+##   (Intercept)    -37.032         2.864                 -12.930    0.000    -42.656    -31.408 
+##   imdb_rating     14.658         0.566        0.786     25.901    0.000     13.546     15.769 
+## critics_score      0.073         0.022        0.103      3.386    0.001      0.031      0.116 
+## ----------------------------------------------------------------------------------------------
+## 
+## 
+## Forward Selection: Step 3 
+## 
+##  Variable genre Entered 
+## 
+##                         Model Summary                          
+## --------------------------------------------------------------
+## R                       0.877       RMSE                9.817 
+## R-Squared               0.769       Coef. Var          15.742 
+## Adj. R-Squared          0.764       MSE                96.378 
+## Pred R-Squared          0.759       MAE                 7.415 
+## --------------------------------------------------------------
+##  RMSE: Root Mean Square Error 
+##  MSE: Mean Square Error 
+##  MAE: Mean Absolute Error 
+## 
+##                                  ANOVA                                   
+## ------------------------------------------------------------------------
+##                   Sum of                                                
+##                  Squares         DF    Mean Square       F         Sig. 
+## ------------------------------------------------------------------------
+## Regression    204331.585         12      17027.632    176.676    0.0000 
+## Residual       61488.860        638         96.378                      
+## Total         265820.445        650                                     
+## ------------------------------------------------------------------------
+## 
+##                                               Parameter Estimates                                               
+## ---------------------------------------------------------------------------------------------------------------
+##                          model       Beta    Std. Error    Std. Beta       t        Sig       lower      upper 
+## ---------------------------------------------------------------------------------------------------------------
+##                    (Intercept)    -37.153         3.109                 -11.950    0.000    -43.258    -31.048 
+##                    imdb_rating     14.766         0.573        0.792     25.777    0.000     13.642     15.891 
+##                  critics_score      0.067         0.021        0.094      3.122    0.002      0.025      0.109 
+##                 genreAnimation      9.117         3.498        0.053      2.606    0.009      2.247     15.987 
+## genreArt House & International      0.030         2.905        0.000      0.010    0.992     -5.674      5.734 
+##                    genreComedy      2.092         1.614        0.035      1.296    0.195     -1.078      5.261 
+##               genreDocumentary      1.194         1.968        0.016      0.607    0.544     -2.671      5.059 
+##                     genreDrama     -0.203         1.380       -0.005     -0.147    0.883     -2.913      2.507 
+##                    genreHorror     -5.028         2.387       -0.046     -2.106    0.036     -9.716     -0.340 
+## genreMusical & Performing Arts      4.398         3.138        0.029      1.401    0.162     -1.765     10.561 
+##        genreMystery & Suspense     -6.253         1.779       -0.089     -3.515    0.000     -9.746     -2.759 
+##                     genreOther      1.582         2.763        0.012      0.573    0.567     -3.843      7.007 
+## genreScience Fiction & Fantasy     -0.291         3.503       -0.002     -0.083    0.934     -7.170      6.588 
+## ---------------------------------------------------------------------------------------------------------------
+```
+
+```
+## Forward Selection Method                                                         
+## 
+## Candidate Terms:                                                                 
+## 
+## 1 . title_type                                                                   
+## 2 . genre                                                                        
+## 3 . runtime                                                                      
+## 4 . mpaa_rating                                                                  
+## 5 . thtr_rel_month                                                               
+## 6 . dvd_rel_month                                                                
+## 7 . imdb_rating                                                                  
+## 8 . critics_rating                                                               
+## 9 . critics_score                                                                
+## 10 . best_pic_nom                                                                
+## 11 . best_pic_win                                                                
+## 12 . best_actor_win                                                              
+## 13 . best_actress_win                                                            
+## 14 . best_dir_win                                                                
+## 15 . top200_box                                                                  
+## 
+## --------------------------------------------------------------------------------
+##                                Selection Summary                                 
+## --------------------------------------------------------------------------------
+##         Variable                       Adj.                                         
+## Step       Entered       R-Square    R-Square     C(p)         AIC        RMSE      
+## --------------------------------------------------------------------------------
+##    1    imdb_rating        0.7480      0.7476    49.1726    4870.0444    10.1597    
+##    2    critics_score      0.7524      0.7516    39.0709    4860.6284    10.0787    
+##    3    genre              0.7687      0.7643    -3.9862    4836.2722     9.8172    
+## --------------------------------------------------------------------------------
+```
+
 
 * * *
 

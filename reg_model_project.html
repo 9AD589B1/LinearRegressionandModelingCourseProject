@@ -11,7 +11,7 @@
 
 <meta name="author" content="David Kochar" />
 
-<meta name="date" content="2018-01-22" />
+<meta name="date" content="2018-01-23" />
 
 <title>Linear Modeling and Prediction for Movies</title>
 
@@ -147,7 +147,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Linear Modeling and Prediction for Movies</h1>
 <h4 class="author"><em>David Kochar</em></h4>
-<h4 class="date"><em>2018-01-22</em></h4>
+<h4 class="date"><em>2018-01-23</em></h4>
 
 </div>
 
@@ -186,7 +186,7 @@ knitr<span class="op">::</span>opts_chunk<span class="op">$</span><span class="k
 <p>Install and load required libraries if neccessary.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#Check installed status of requried packages, and install if necessary</span>
 list.of.packages &lt;-
-<span class="st">  </span><span class="kw">c</span>(<span class="st">&quot;statsr&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;scales&quot;</span>, <span class="st">&quot;kableExtra&quot;</span>)
+<span class="st">  </span><span class="kw">c</span>(<span class="st">&quot;statsr&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;scales&quot;</span>, <span class="st">&quot;kableExtra&quot;</span>, <span class="st">&quot;olsrr&quot;</span>)
 new.packages &lt;-
 <span class="st">  </span>list.of.packages[<span class="op">!</span>(list.of.packages <span class="op">%in%</span><span class="st"> </span><span class="kw">installed.packages</span>()[, <span class="st">&quot;Package&quot;</span>])]
 <span class="cf">if</span> (<span class="kw">length</span>(new.packages))
@@ -195,7 +195,8 @@ new.packages &lt;-
 <span class="kw">suppressWarnings</span> (<span class="kw">suppressMessages</span> (<span class="kw">library</span> (dplyr)))
 <span class="kw">suppressWarnings</span> (<span class="kw">suppressMessages</span> (<span class="kw">library</span> (ggplot2)))
 <span class="kw">suppressWarnings</span> (<span class="kw">suppressMessages</span> (<span class="kw">library</span> (scales)))
-<span class="kw">suppressWarnings</span> (<span class="kw">suppressMessages</span> (<span class="kw">library</span> (kableExtra)))</code></pre></div>
+<span class="kw">suppressWarnings</span> (<span class="kw">suppressMessages</span> (<span class="kw">library</span> (kableExtra)))
+<span class="kw">suppressWarnings</span> (<span class="kw">suppressMessages</span> (<span class="kw">library</span> (olsrr)))</code></pre></div>
 </div>
 <div id="load-data" class="section level3">
 <h3>Load data</h3>
@@ -212,23 +213,8 @@ new.packages &lt;-
 </div>
 <div id="part-2-research-question" class="section level2">
 <h2>Part 2: Research question</h2>
-<p>We will research the association and predictive value between the response variable “Audience Score on Rotten Tomatoes,” and these explanatory variables:</p>
-<ul>
-<li>Critics score on Rotten Tomatoes</li>
-<li>Critics rating on Rotten Tomatoes (Certified Fresh, Fresh, Rotten)</li>
-<li>MPAA rating of the movie (G, PG, PG-13, R, Unrated)</li>
-<li>Genre of movie (Action &amp; Adventure, Comedy, Documentary, Drama, Horror, Mystery &amp; Suspense, Other)</li>
-<li>Rating on IMDB</li>
-<li>Runtime of movie (in minutes)</li>
-<li>Whether or not the movie was nominated for a best picture Oscar (no, yes)</li>
-<li>Whether or not the movie won a best picture Oscar (no, yes)</li>
-<li>Whether or not one of the main actors in the movie ever won an Oscar (no, yes)</li>
-<li>Whether or not one of the main actresses in the movie ever won an Oscar (no, yes)</li>
-<li>Whether or not the director of the movie ever won an Oscar (no, yes)</li>
-<li>Whether or not the movie is in the Top 200 Box Office list on BoxOfficeMojo (no, yes)</li>
-</ul>
+<p>We will research the association and predictive value between the response variable “Audience Score on Rotten Tomatoes,” and multiple explanatory variables to build a multiple linear regression model. Variable selection criteria will be covered in Part 4: Modeling. Note the explanatory variables used in the model were selected based on their contextual relevance.</p>
 <p>The “Audience score on Rotten Tomatoes” variable as a response is of interest because Rotten Tomatoes is more of a “popularity” score generator based on likes and dislikes, and as percentage score, this metric is easily digested. So, as a very simplified and condensed metric, uncovering any meaningful relationships will be interesting.</p>
-<p>The explanatory variables were selected based on understanding different scoring methodologies, and also understanding the influence of perceptual bias, e.g. would a long runtime bore the audience and negatively affect ratings? The remaining variables were not included as they would not lend themselves to modeling. Exclusion details will be included in the “Modeling” section of the analysis.</p>
 <hr />
 </div>
 <div id="part-3-exploratory-data-analysis" class="section level2">
@@ -933,11 +919,217 @@ Horror
 </tr>
 </tbody>
 </table>
+<p>The “Drama” genre had the highest number of observations, and also had the 4th largest mean Audience score. This is helping to shift our global average.</p>
 <hr />
 </div>
 <div id="part-4-modeling" class="section level2">
 <h2>Part 4: Modeling</h2>
-<p>NOTE: Insert code chunks as needed by clicking on the “Insert a new code chunk” button above. Make sure that your code is visible in the project you submit. Delete this note when before you submit your work.</p>
+<p>As mentioned in Part 2, the “Audience Score on Rotten Tomatoes” (audience_score) is our dependent variable. The below explanatory variables will be excluded from modeling because in terms of dimensional richness, they offer no meaningful information gain or add model noise because they are very high-cardinality (unique). For example, the “Link to Rotten Tomatoes page for the movie” variable would have virtually no model value due to its tangential nature and it’s high-cardinality - in other words, a URL has no domain context from a decision making perspective.</p>
+<ul>
+<li>Title of movie</li>
+<li>Studio that produced the movie</li>
+<li>Year the movie is released in theaters</li>
+<li>Day of the month the movie is released in theaters</li>
+<li>Year the movie is released on DVD</li>
+<li>Day of the month the movie is released on DVD</li>
+<li>Number of votes on IMDB</li>
+<li>Director of the movie</li>
+<li>First main actor/actress in the abridged cast of the movie</li>
+<li>Second main actor/actress in the abridged cast of the movie</li>
+<li>Third main actor/actress in the abridged cast of the movie</li>
+<li>Fourth main actor/actress in the abridged cast of the movie</li>
+<li>Fifth main actor/actress in the abridged cast of the movie</li>
+<li>Link to IMDB page for the movie</li>
+<li>Link to Rotten Tomatoes page for the movie</li>
+</ul>
+<p>The below explanatory variables will be included in our modeling as they offer the most information gain potential and dimensional richness.</p>
+<ul>
+<li>Type of movie (Documentary, Feature Film, TV Movie)</li>
+<li>Critics score on Rotten Tomatoes</li>
+<li>Critics rating on Rotten Tomatoes (Certified Fresh, Fresh, Rotten)</li>
+<li>MPAA rating of the movie (G, PG, PG-13, R, Unrated)</li>
+<li>Genre of movie (Action &amp; Adventure, Comedy, Documentary, Drama, Horror, Mystery &amp; Suspense, Other)</li>
+<li>Month the movie is released in theaters</li>
+<li>Month the movie is released on DVD</li>
+<li>Rating on IMDB</li>
+<li>Runtime of movie (in minutes)</li>
+<li>Whether or not the movie was nominated for a best picture Oscar (no, yes)</li>
+<li>Whether or not the movie won a best picture Oscar (no, yes)</li>
+<li>Whether or not one of the main actors in the movie ever won an Oscar (no, yes)</li>
+<li>Whether or not one of the main actresses in the movie ever won an Oscar (no, yes)</li>
+<li>Whether or not the director of the movie ever won an Oscar (no, yes)</li>
+<li>Whether or not the movie is in the Top 200 Box Office list on BoxOfficeMojo (no, yes)</li>
+</ul>
+<p>To build our mulitple linear regression model, we will use stepwise forward selection via the “ols_step_forward” function from the “olsrr” R package. The function will build the model from our set of explanatory variables by entering predictors based on p-values in a stepwise manner. The first variable to be added to the model is most the significant, and more variables are included until none of remaining variables are “significant” when added to the model.</p>
+<p>Compared to stepwise backward selection, stepwise forward selection was used for its low computational resource requirements and thus ease of reproducibility. It is worth noting the forward selection key disadvantage, such that each addition of a new variable may undermine the significance of variables already in the model.</p>
+<p>Let’s run the model.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#create the list of predictor coefficients</span>
+MultiRegression1 &lt;-<span class="st"> </span><span class="kw">lm</span>(
+  audience_score <span class="op">~</span><span class="st"> </span>title_type <span class="op">+</span>
+<span class="st">  </span>genre <span class="op">+</span>
+<span class="st">  </span>runtime <span class="op">+</span>
+<span class="st">  </span>mpaa_rating <span class="op">+</span>
+<span class="st">  </span>thtr_rel_month <span class="op">+</span>
+<span class="st">  </span>dvd_rel_month <span class="op">+</span>
+<span class="st">  </span>imdb_rating <span class="op">+</span>
+<span class="st">  </span>critics_rating <span class="op">+</span>
+<span class="st">  </span>critics_score <span class="op">+</span>
+<span class="st">  </span>best_pic_nom <span class="op">+</span>
+<span class="st">  </span>best_pic_win <span class="op">+</span>
+<span class="st">  </span>best_actor_win <span class="op">+</span>
+<span class="st">  </span>best_actress_win <span class="op">+</span>
+<span class="st">  </span>best_dir_win <span class="op">+</span>
+<span class="st">  </span>top200_box,
+  <span class="dt">data =</span> movies
+  )
+
+<span class="co">#generate the multi-regression model  </span>
+<span class="kw">ols_step_forward</span> (MultiRegression1, <span class="dt">details =</span> <span class="ot">TRUE</span>)</code></pre></div>
+<pre><code>## Variable Selection Procedure
+##  Dependent Variable: audience_score 
+## 
+##  Forward Selection: Step 1 
+## 
+##  Variable imdb_rating Entered 
+## 
+##                          Model Summary                          
+## ---------------------------------------------------------------
+## R                       0.865       RMSE                10.160 
+## R-Squared               0.748       Coef. Var           16.291 
+## Adj. R-Squared          0.748       MSE                103.219 
+## Pred R-Squared          0.745       MAE                  7.742 
+## ---------------------------------------------------------------
+##  RMSE: Root Mean Square Error 
+##  MSE: Mean Square Error 
+##  MAE: Mean Absolute Error 
+## 
+##                                   ANOVA                                   
+## -------------------------------------------------------------------------
+##                   Sum of                                                 
+##                  Squares         DF    Mean Square       F          Sig. 
+## -------------------------------------------------------------------------
+## Regression    198831.499          1     198831.499    1926.312    0.0000 
+## Residual       66988.946        649        103.219                       
+## Total         265820.445        650                                      
+## -------------------------------------------------------------------------
+## 
+##                                     Parameter Estimates                                      
+## --------------------------------------------------------------------------------------------
+##       model       Beta    Std. Error    Std. Beta       t        Sig       lower      upper 
+## --------------------------------------------------------------------------------------------
+## (Intercept)    -42.328         2.418                 -17.503    0.000    -47.077    -37.580 
+## imdb_rating     16.123         0.367        0.865     43.890    0.000     15.402     16.845 
+## --------------------------------------------------------------------------------------------
+## 
+## 
+## Forward Selection: Step 2 
+## 
+##  Variable critics_score Entered 
+## 
+##                          Model Summary                          
+## ---------------------------------------------------------------
+## R                       0.867       RMSE                10.079 
+## R-Squared               0.752       Coef. Var           16.162 
+## Adj. R-Squared          0.752       MSE                101.581 
+## Pred R-Squared          0.749       MAE                  7.702 
+## ---------------------------------------------------------------
+##  RMSE: Root Mean Square Error 
+##  MSE: Mean Square Error 
+##  MAE: Mean Absolute Error 
+## 
+##                                  ANOVA                                   
+## ------------------------------------------------------------------------
+##                   Sum of                                                
+##                  Squares         DF    Mean Square       F         Sig. 
+## ------------------------------------------------------------------------
+## Regression    199995.983          2      99997.991    984.417    0.0000 
+## Residual       65824.463        648        101.581                      
+## Total         265820.445        650                                     
+## ------------------------------------------------------------------------
+## 
+##                                      Parameter Estimates                                       
+## ----------------------------------------------------------------------------------------------
+##         model       Beta    Std. Error    Std. Beta       t        Sig       lower      upper 
+## ----------------------------------------------------------------------------------------------
+##   (Intercept)    -37.032         2.864                 -12.930    0.000    -42.656    -31.408 
+##   imdb_rating     14.658         0.566        0.786     25.901    0.000     13.546     15.769 
+## critics_score      0.073         0.022        0.103      3.386    0.001      0.031      0.116 
+## ----------------------------------------------------------------------------------------------
+## 
+## 
+## Forward Selection: Step 3 
+## 
+##  Variable genre Entered 
+## 
+##                         Model Summary                          
+## --------------------------------------------------------------
+## R                       0.877       RMSE                9.817 
+## R-Squared               0.769       Coef. Var          15.742 
+## Adj. R-Squared          0.764       MSE                96.378 
+## Pred R-Squared          0.759       MAE                 7.415 
+## --------------------------------------------------------------
+##  RMSE: Root Mean Square Error 
+##  MSE: Mean Square Error 
+##  MAE: Mean Absolute Error 
+## 
+##                                  ANOVA                                   
+## ------------------------------------------------------------------------
+##                   Sum of                                                
+##                  Squares         DF    Mean Square       F         Sig. 
+## ------------------------------------------------------------------------
+## Regression    204331.585         12      17027.632    176.676    0.0000 
+## Residual       61488.860        638         96.378                      
+## Total         265820.445        650                                     
+## ------------------------------------------------------------------------
+## 
+##                                               Parameter Estimates                                               
+## ---------------------------------------------------------------------------------------------------------------
+##                          model       Beta    Std. Error    Std. Beta       t        Sig       lower      upper 
+## ---------------------------------------------------------------------------------------------------------------
+##                    (Intercept)    -37.153         3.109                 -11.950    0.000    -43.258    -31.048 
+##                    imdb_rating     14.766         0.573        0.792     25.777    0.000     13.642     15.891 
+##                  critics_score      0.067         0.021        0.094      3.122    0.002      0.025      0.109 
+##                 genreAnimation      9.117         3.498        0.053      2.606    0.009      2.247     15.987 
+## genreArt House &amp; International      0.030         2.905        0.000      0.010    0.992     -5.674      5.734 
+##                    genreComedy      2.092         1.614        0.035      1.296    0.195     -1.078      5.261 
+##               genreDocumentary      1.194         1.968        0.016      0.607    0.544     -2.671      5.059 
+##                     genreDrama     -0.203         1.380       -0.005     -0.147    0.883     -2.913      2.507 
+##                    genreHorror     -5.028         2.387       -0.046     -2.106    0.036     -9.716     -0.340 
+## genreMusical &amp; Performing Arts      4.398         3.138        0.029      1.401    0.162     -1.765     10.561 
+##        genreMystery &amp; Suspense     -6.253         1.779       -0.089     -3.515    0.000     -9.746     -2.759 
+##                     genreOther      1.582         2.763        0.012      0.573    0.567     -3.843      7.007 
+## genreScience Fiction &amp; Fantasy     -0.291         3.503       -0.002     -0.083    0.934     -7.170      6.588 
+## ---------------------------------------------------------------------------------------------------------------</code></pre>
+<pre><code>## Forward Selection Method                                                         
+## 
+## Candidate Terms:                                                                 
+## 
+## 1 . title_type                                                                   
+## 2 . genre                                                                        
+## 3 . runtime                                                                      
+## 4 . mpaa_rating                                                                  
+## 5 . thtr_rel_month                                                               
+## 6 . dvd_rel_month                                                                
+## 7 . imdb_rating                                                                  
+## 8 . critics_rating                                                               
+## 9 . critics_score                                                                
+## 10 . best_pic_nom                                                                
+## 11 . best_pic_win                                                                
+## 12 . best_actor_win                                                              
+## 13 . best_actress_win                                                            
+## 14 . best_dir_win                                                                
+## 15 . top200_box                                                                  
+## 
+## --------------------------------------------------------------------------------
+##                                Selection Summary                                 
+## --------------------------------------------------------------------------------
+##         Variable                       Adj.                                         
+## Step       Entered       R-Square    R-Square     C(p)         AIC        RMSE      
+## --------------------------------------------------------------------------------
+##    1    imdb_rating        0.7480      0.7476    49.1726    4870.0444    10.1597    
+##    2    critics_score      0.7524      0.7516    39.0709    4860.6284    10.0787    
+##    3    genre              0.7687      0.7643    -3.9862    4836.2722     9.8172    
+## --------------------------------------------------------------------------------</code></pre>
 <hr />
 </div>
 <div id="part-5-prediction" class="section level2">

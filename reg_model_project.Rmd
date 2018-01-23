@@ -48,7 +48,7 @@ Install and load required libraries if neccessary.
 ```{r load-packages}
 #Check installed status of requried packages, and install if necessary
 list.of.packages <-
-  c("statsr", "dplyr", "ggplot2", "scales", "kableExtra")
+  c("statsr", "dplyr", "ggplot2", "scales", "kableExtra", "olsrr")
 new.packages <-
   list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]
 if (length(new.packages))
@@ -58,6 +58,7 @@ suppressWarnings (suppressMessages (library (dplyr)))
 suppressWarnings (suppressMessages (library (ggplot2)))
 suppressWarnings (suppressMessages (library (scales)))
 suppressWarnings (suppressMessages (library (kableExtra)))
+suppressWarnings (suppressMessages (library (olsrr)))
 ```
 
 ### Load data
@@ -82,24 +83,10 @@ Since simple random sampling was used, we know that each population observation 
 
 ## Part 2: Research question
 
-We will research the association and predictive value between the response variable "Audience Score on Rotten Tomatoes," and these explanatory variables:
-
-* Critics score on Rotten Tomatoes
-* Critics rating on Rotten Tomatoes (Certified Fresh, Fresh, Rotten)
-* MPAA rating of the movie (G, PG, PG-13, R, Unrated)
-* Genre of movie (Action & Adventure, Comedy, Documentary, Drama, Horror, Mystery & Suspense, Other)
-* Rating on IMDB
-* Runtime of movie (in minutes)
-* Whether or not the movie was nominated for a best picture Oscar (no, yes)
-* Whether or not the movie won a best picture Oscar (no, yes)
-* Whether or not one of the main actors in the movie ever won an Oscar (no, yes)
-* Whether or not one of the main actresses in the movie ever won an Oscar (no, yes)
-* Whether or not the director of the movie ever won an Oscar (no, yes)
-* Whether or not the movie is in the Top 200 Box Office list on BoxOfficeMojo (no, yes)
+We will research the association and predictive value between the response variable "Audience Score on Rotten Tomatoes," and multiple explanatory variables to build a multiple linear regression model. Variable selection criteria will be covered in Part 4: Modeling. Note the explanatory variables used in the model were selected based on their contextual relevance.
 
 The "Audience score on Rotten Tomatoes" variable as a response is of interest because Rotten Tomatoes is more of a "popularity" score generator based on likes and dislikes, and as percentage score, this metric is easily digested. So, as a very simplified and condensed metric, uncovering any meaningful relationships will be interesting.
 
-The explanatory variables were selected based on understanding different scoring methodologies, and also understanding the influence of perceptual bias, e.g. would a long runtime bore the audience and negatively affect ratings? The remaining variables were not included as they would not lend themselves to modeling. Exclusion details will be included in the "Modeling" section of the analysis.
 
 * * *
 
@@ -310,29 +297,73 @@ The "Drama" genre had the highest number of observations, and also had the 4th l
 
 ## Part 4: Modeling
 
-```{r audiencescore-genreummarystats}
+As mentioned in Part 2, the "Audience Score on Rotten Tomatoes" (audience_score) is our dependent variable. The below explanatory variables will be excluded from modeling because in terms of dimensional richness, they offer no meaningful information gain or add model noise because they are very high-cardinality (unique). For example, the "Link to Rotten Tomatoes page for the movie" variable would have virtually no model value due to its tangential nature and it's high-cardinality - in other words, a URL has no domain context from a decision making perspective.
 
+* Title of movie
+* Studio that produced the movie
+* Year the movie is released in theaters
+* Day of the month the movie is released in theaters
+* Year the movie is released on DVD
+* Day of the month the movie is released on DVD
+* Number of votes on IMDB
+* Director of the movie
+* First main actor/actress in the abridged cast of the movie
+* Second main actor/actress in the abridged cast of the movie
+* Third main actor/actress in the abridged cast of the movie
+* Fourth main actor/actress in the abridged cast of the movie
+* Fifth main actor/actress in the abridged cast of the movie
+* Link to IMDB page for the movie
+* Link to Rotten Tomatoes page for the movie
+
+The below explanatory variables will be included in our modeling as they offer the most information gain potential and dimensional richness.
+
+* Type of movie (Documentary, Feature Film, TV Movie)
+* Critics score on Rotten Tomatoes
+* Critics rating on Rotten Tomatoes (Certified Fresh, Fresh, Rotten)
+* MPAA rating of the movie (G, PG, PG-13, R, Unrated)
+* Genre of movie (Action & Adventure, Comedy, Documentary, Drama, Horror, Mystery & Suspense, Other)
+* Month the movie is released in theaters
+* Month the movie is released on DVD
+* Rating on IMDB
+* Runtime of movie (in minutes)
+* Whether or not the movie was nominated for a best picture Oscar (no, yes)
+* Whether or not the movie won a best picture Oscar (no, yes)
+* Whether or not one of the main actors in the movie ever won an Oscar (no, yes)
+* Whether or not one of the main actresses in the movie ever won an Oscar (no, yes)
+* Whether or not the director of the movie ever won an Oscar (no, yes)
+* Whether or not the movie is in the Top 200 Box Office list on BoxOfficeMojo (no, yes)
+
+To build our mulitple linear regression model, we will use stepwise forward selection via the "ols_step_forward" function from the "olsrr" R package. The function will build the model from our set of explanatory variables by entering predictors based on p-values in a stepwise manner. The first variable to be added to the model is most the significant, and more variables are included until none of remaining variables are "significant" when added to the model.
+
+Compared to stepwise backward selection, stepwise forward selection was used for its low computational resource requirements and thus ease of reproducibility. It is worth noting the forward selection key disadvantage, such that each addition of a new variable may undermine the significance of variables already in the model.
+
+Let's run the model.
+
+```{r audiencescore-model}
+#create the list of predictor coefficients
 MultiRegression1 <- lm(
-audience_score ~ mpaa_rating +
-critics_score +
-critics_rating +
-imdb_rating +
-mpaa_rating +
-genre +
-best_pic_nom +
-best_pic_win +
-best_actor_win +
-best_actress_win +
-best_dir_win +
-top200_box +
-runtime,
-data = movies
-)
-summary(MultiRegression1)
+  audience_score ~ title_type +
+  genre +
+  runtime +
+  mpaa_rating +
+  thtr_rel_month +
+  dvd_rel_month +
+  imdb_rating +
+  critics_rating +
+  critics_score +
+  best_pic_nom +
+  best_pic_win +
+  best_actor_win +
+  best_actress_win +
+  best_dir_win +
+  top200_box,
+  data = movies
+  )
 
-ols_best_subset(MultiRegression1)
-
+#generate the multi-regression model  
+ols_step_forward (MultiRegression1, details = TRUE)
 ```
+
 
 * * *
 
