@@ -406,7 +406,19 @@ bptest (MultiRegression2)
 ncvTest (MultiRegression2)
 ```
 
+Since both tests have a p-value less than a significance level of 0.05, we can conclude heteroscedasticity exists.
 
+To conclude our modeling section, we will provide the interpretation of the model coefficients. Here's a summary of the model.
+
+```{r new-modelsummary}
+summary (MultiRegression2)
+```
+
+Next, let's go over our model coefficients:
+
+* **Intercept**: When all explanatory variables are set to zero, the predicted Audience score on Rotten Tomatoes is -37.15275. This is meaningless because we cannot have a negative Audience Score
+* **imdb_rating**: Holding all other explanatory variables constant, for each 1 point increase in our IMDB Rating, the model predicts that our Audience Score will increase by 14.76 on average
+* **genre**: Note that our reference level for genre is "Action & Adventure" because it is not listed in the output. For the reference level, we would use "0" for all other genre levels to predict the Audience score. For all non-reference levels, we would use "1" for the level of interest and "0" for the other levels. So, all else constant, the model predicts that for each non-reference genre level the Audience score will be the level's coeffcient higher or lower.
 
 
 * * *

@@ -824,7 +824,53 @@ ncvTest (MultiRegression2)
 ## Chisquare = 164.1416    Df = 1     p = 1.4087e-37
 ```
 
+Since both tests have a p-value less than a significance level of 0.05, we can conclude heteroscedasticity exists.
 
+To conclude our modeling section, we will provide the interpretation of the model coefficients. Here's a summary of the model.
+
+
+```r
+summary (MultiRegression2)
+```
+
+```
+## 
+## Call:
+## lm(formula = audience_score ~ imdb_rating + critics_score + genre, 
+##     data = movies)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -26.708  -6.446   0.614   5.479  50.111 
+## 
+## Coefficients:
+##                                 Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                    -37.15275    3.10900 -11.950  < 2e-16 ***
+## imdb_rating                     14.76644    0.57286  25.777  < 2e-16 ***
+## critics_score                    0.06687    0.02142   3.122 0.001879 ** 
+## genreAnimation                   9.11698    3.49847   2.606 0.009375 ** 
+## genreArt House & International   0.03008    2.90452   0.010 0.991740    
+## genreComedy                      2.09167    1.61412   1.296 0.195493    
+## genreDocumentary                 1.19414    1.96833   0.607 0.544281    
+## genreDrama                      -0.20316    1.38018  -0.147 0.883022    
+## genreHorror                     -5.02795    2.38740  -2.106 0.035591 *  
+## genreMusical & Performing Arts   4.39791    3.13828   1.401 0.161588    
+## genreMystery & Suspense         -6.25279    1.77914  -3.515 0.000472 ***
+## genreOther                       1.58228    2.76266   0.573 0.567024    
+## genreScience Fiction & Fantasy  -0.29079    3.50319  -0.083 0.933872    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 9.817 on 638 degrees of freedom
+## Multiple R-squared:  0.7687,	Adjusted R-squared:  0.7643 
+## F-statistic: 176.7 on 12 and 638 DF,  p-value: < 2.2e-16
+```
+
+Next, let's go over our coefficients:
+
+* **Intercept**: When all explanatory variables are set to zero, the predicted Audience score on Rotten Tomatoes is -37.15275. This is meaningless because we cannot have a negative Audience Score
+* **imdb_rating**: Holding all other explanatory variables constant, for each 1 point increase in our IMDB Rating, the model predicts that our Audience Score will increase by 14.76 on average
+* **genre**: Note that our reference level for genre is "Action & Adventure" because it is not listed in the output. For the reference level, we would use "0" for all other genre levels to predict the Audience score. For all non-reference levels, we would use "1" for the level of interest and "0" for the other levels. So, all else constant, the model predicts that for each non-reference genre level the Audience score will be the level's coeffcient higher or lower.
 
 
 * * *
