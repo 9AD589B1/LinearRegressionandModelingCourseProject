@@ -50,7 +50,7 @@ Install and load required libraries if neccessary.
 ```r
 #Check installed status of requried packages, and install if necessary
 list.of.packages <-
-  c("statsr", "dplyr", "ggplot2", "scales", "kableExtra", "olsrr")
+  c("statsr", "dplyr", "ggplot2", "scales", "kableExtra", "olsrr", "lmtest", "car")
 new.packages <-
   list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]
 if (length(new.packages))
@@ -61,6 +61,8 @@ suppressWarnings (suppressMessages (library (ggplot2)))
 suppressWarnings (suppressMessages (library (scales)))
 suppressWarnings (suppressMessages (library (kableExtra)))
 suppressWarnings (suppressMessages (library (olsrr)))
+suppressWarnings (suppressMessages (library (lmtest)))
+suppressWarnings (suppressMessages (library (car)))
 ```
 
 ### Load data
@@ -541,7 +543,7 @@ The "Drama" genre had the highest number of observations, and also had the 4th l
 
 ## Part 4: Modeling
 
-As mentioned in Part 2, the "Audience Score on Rotten Tomatoes" (audience_score) is our dependent variable. The below explanatory variables will be excluded from modeling because in terms of dimensional richness, they offer no meaningful information gain or add model noise because they are very high-cardinality (unique). For example, the "Link to Rotten Tomatoes page for the movie" variable would have virtually no model value due to its tangential nature and it's high-cardinality - in other words, a URL has no domain context from a decision making perspective.
+As mentioned in Part 2, the "Audience Score on Rotten Tomatoes" (audience_score) is our dependent variable. The below explanatory variables will be excluded from modeling because in terms of dimensional richness, they offer no meaningful information gain or they add model noise because they are very high-cardinality (unique). For example, the "Link to Rotten Tomatoes page for the movie" variable would have virtually no model value due to its tangential nature and it's high-cardinality - in other words, a URL has no domain context from a decision making perspective.
 
 * Title of movie
 * Studio that produced the movie
@@ -759,6 +761,70 @@ ols_step_forward (MultiRegression1, details = TRUE)
 ##    3    genre              0.7687      0.7643    -3.9862    4836.2722     9.8172    
 ## --------------------------------------------------------------------------------
 ```
+
+Our model has selected the variables of IMDB Rating, Genre, and the Critics score on Rotten Tomatoes. Let's peform diagnostics to evaluate how well the model fits the data. We will use the standard diagnostic plot set of: 
+
+* Residuals vs. Fitted Values Plot
+* Q-Q Plot
+* Scale Location Plot
+* Residuals vs. Leverage Plot
+
+First, we need to generate a new model based on the stepwise forward selection.
+
+
+```r
+#generate the new model
+MultiRegression2 <- lm(
+  audience_score ~ 
+    imdb_rating +
+    critics_score +
+    genre,
+  data = movies
+)
+```
+
+
+```r
+#plot diagnostics with the generated model
+plot (MultiRegression2)
+```
+
+![](figures/DataAnalysisProject_diagnostic-plots-1.png)<!-- -->![](figures/DataAnalysisProject_diagnostic-plots-2.png)<!-- -->![](figures/DataAnalysisProject_diagnostic-plots-3.png)<!-- -->![](figures/DataAnalysisProject_diagnostic-plots-4.png)<!-- -->
+
+Now we can step through each plot to understand the diagnostic assessment.
+
+* **Residuals vs. Fitted Values Plot**: There are no obvious patterns in the distribution. The points appear randomly distributed
+* **Q-Q Plot**: Save for a few outliers in the upper right quadrant, our residuals show a very normal distribution
+* **Scale Location Plot**: As with the Residuals vs. Fitted plot, there are no obvious patterns in the distribution. The points appear randomly distributed
+* **Residuals vs. Leverage Plot**: We see that points 126, 348, and 302 have the greatest influence on the model
+
+
+To verify our residuals vs. fitted values' heteroscedasticity, we will use a Breusch-Pagan Test and an NCV Test.
+
+
+```r
+bptest (MultiRegression2)
+```
+
+```
+## 
+## 	studentized Breusch-Pagan test
+## 
+## data:  MultiRegression2
+## BP = 108.51, df = 12, p-value < 2.2e-16
+```
+
+```r
+ncvTest (MultiRegression2)
+```
+
+```
+## Non-constant Variance Score Test 
+## Variance formula: ~ fitted.values 
+## Chisquare = 164.1416    Df = 1     p = 1.4087e-37
+```
+
+
 
 
 * * *
