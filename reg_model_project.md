@@ -71,7 +71,7 @@ Load the data set.
 
 
 ```r
-load ( url ("https://d18ky98rnyall9.cloudfront.net/_e1fe0c85abec6f73c72d73926884eaca_movies.Rdata?Expires=1516752000&Signature=V~IF9fgLNxHP8GsU60bOaOkylphqvSDRSnZQM~A7mrA4qFV7L4UrEHMfOHv4blQM6A9LwV0xBUkKdAcAhUB1NAUsmTNvDoRZ7W2S2MyO-lUyWPCD7zWi9hK98TsB4RXtmpsW1V2x4o-R2TsTTWxtJMbOjFjmotl~0cYotEaGqU0_&Key-Pair-Id=APKAJLTNE6QMUY6HBC5A"))
+load ( url ("https://d18ky98rnyall9.cloudfront.net/_e1fe0c85abec6f73c72d73926884eaca_movies.Rdata?Expires=1516924800&Signature=WUuGqHLm1BK2nWJPFSb~ONIiNylTRh4amRdLaX0bWK8T1daAC~XVI~Kw4rHHXsWMMp2pa2HLTbEUhk4sW3TA1MNvtocSihOxm33Dc~oEJuQ7alE0Wmm4PLyTGi~XUvNejiyoVpugdfuDphurmxsEBtF2xo59jrRRjjY7XjfJIQs_&Key-Pair-Id=APKAJLTNE6QMUY6HBC5A"))
 ```
 
 
@@ -866,7 +866,7 @@ summary (MultiRegression2)
 ## F-statistic: 176.7 on 12 and 638 DF,  p-value: < 2.2e-16
 ```
 
-Next, let's go over our coefficients:
+Next, let's go over our model coefficients:
 
 * **Intercept**: When all explanatory variables are set to zero, the predicted Audience score on Rotten Tomatoes is -37.15275. This is meaningless because we cannot have a negative Audience Score
 * **imdb_rating**: Holding all other explanatory variables constant, for each 1 point increase in our IMDB Rating, the model predicts that our Audience Score will increase by 14.76 on average
