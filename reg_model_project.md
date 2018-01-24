@@ -1,7 +1,7 @@
 ---
 title: "Linear Modeling and Prediction for Movies"
 author: "David Kochar"
-date: '2018-01-23'
+date: '2018-01-24'
 output: 
   html_document: 
     keep_md: true
@@ -50,7 +50,7 @@ Install and load required libraries if neccessary.
 ```r
 #Check installed status of requried packages, and install if necessary
 list.of.packages <-
-  c("statsr", "dplyr", "ggplot2", "scales", "kableExtra", "olsrr", "lmtest", "car")
+  c("statsr", "dplyr", "ggplot2", "kableExtra", "olsrr", "lmtest", "car")
 new.packages <-
   list.of.packages[!(list.of.packages %in% installed.packages()[, "Package"])]
 if (length(new.packages))
@@ -58,7 +58,6 @@ if (length(new.packages))
 suppressWarnings (suppressMessages (library (statsr)))
 suppressWarnings (suppressMessages (library (dplyr)))
 suppressWarnings (suppressMessages (library (ggplot2)))
-suppressWarnings (suppressMessages (library (scales)))
 suppressWarnings (suppressMessages (library (kableExtra)))
 suppressWarnings (suppressMessages (library (olsrr)))
 suppressWarnings (suppressMessages (library (lmtest)))
@@ -80,7 +79,7 @@ load ( url ("https://d18ky98rnyall9.cloudfront.net/_e1fe0c85abec6f73c72d73926884
 
 ## Part 1: Data
 
-According to the project's code book, the observations in the "Movies" data set was randomly sampled from IMDB and Rotten Tomatoes APIs. For the sake of the analysis, we will assume the sampling method used was simple random sampling.
+According to the project's code book, the observations in the "Movies" data set were randomly sampled from IMDB and Rotten Tomatoes APIs. For the sake of the analysis, we will assume the sampling method used was simple random sampling.
 
 Since simple random sampling was used, we know that each population observation has an equal chance of being selected. Thus, we can infer generalizability about the "Movies" data set. Note that we cannot infer causality becase random assignment of the observations was not used.
 
@@ -88,7 +87,7 @@ Since simple random sampling was used, we know that each population observation 
 
 ## Part 2: Research question
 
-We will research the association and predictive value between the response variable "Audience Score on Rotten Tomatoes," and multiple explanatory variables to build a multiple linear regression model. Variable selection criteria will be covered in Part 4: Modeling. Note the explanatory variables used in the model were selected based on their contextual relevance.
+We will research the association and predictive value between the response variable "Audience Score on Rotten Tomatoes," and multiple explanatory variables to build a multiple linear regression model. Variable selection criteria will be covered in Part 4: Modeling. Note the explanatory variables used in the model were selected based on their contextual relevance, and we won't be excluding variables upfront other than those that have obviously no value.
 
 The "Audience score on Rotten Tomatoes" variable as a response is of interest because Rotten Tomatoes is more of a "popularity" score generator based on likes and dislikes, and as percentage score, this metric is easily digested. So, as a very simplified and condensed metric, uncovering any meaningful relationships will be interesting.
 
@@ -242,7 +241,7 @@ IMDBRatingSummary %>%
 </table>
 
 
-Again, we see the median score is higher than the mean score, confirming the left skewness of the IMDB Ratings. At this point, we want to call out potential bias in the sample and its effects on inference. In other words, the rating inflation can effect our inference results, and subsequent analysis may benefit from a new sample.
+Again, we see the median score is higher than the mean score, confirming the left skewness of the IMDB Ratings. At this point, we want to call out potential bias in the sample and its potential effects on generalizability.
 
 However, this bias may disappear in a multi-variate view. Let's breakdown our Rotten Tomatoes Audience Score by MPAA rating.
 
@@ -257,7 +256,7 @@ ggplot(data = subset(movies, !is.na(mpaa_rating) &
 
 ![](figures/DataAnalysisProject_AudienceScore-RatingBoxplots-1.png)<!-- -->
 
-We can see that "Unrated" movies have overwhelmingly positive reviews with little variation, and PG-13 movies have the lowest median score with much variability. To getter more detailed view of skewness, let's look at a quantile-quantile plot.
+We can see that "Unrated" movies have overwhelmingly positive reviews with little variation, and PG-13 movies have the lowest median score with much variability. To get a more detailed view of skewness, let's look at a quantile-quantile plot.
 
 
 ```r
@@ -382,7 +381,7 @@ ggplot(data = subset(movies,!is.na(genre) &
 
 ![](figures/DataAnalysisProject_AudienceScore-GenreBoxplots-1.png)<!-- -->
 
-Genre variability is incredibly diverse. We can see that a movie's rating is definitely affected by its genre, where documentaries fare much better than action movies. This revelation begs the question of significance between genres. Let's look at the quantile-quantile plot.
+Genre variability is incredibly diverse. We can see that a movie's rating is definitely affected by its genre, where documentaries fare much better than action movies. This revelation begs the question of significance between genres, which we may wan to address in additional analysis. Let's look at the quantile-quantile plot.
 
 
 ```r
@@ -543,7 +542,7 @@ The "Drama" genre had the highest number of observations, and also had the 4th l
 
 ## Part 4: Modeling
 
-As mentioned in Part 2, the "Audience Score on Rotten Tomatoes" (audience_score) is our dependent variable. The below explanatory variables will be excluded from modeling because in terms of dimensional richness, they offer no meaningful information gain or they add model noise because they are very high-cardinality (unique). For example, the "Link to Rotten Tomatoes page for the movie" variable would have virtually no model value due to its tangential nature and it's high-cardinality - in other words, a URL has no domain context from a decision making perspective.
+As mentioned in Part 2, the "Audience Score on Rotten Tomatoes" (audience_score) is our dependent variable. The below explanatory variables will be excluded from modeling because in terms of dimensional richness, they offer no meaningful information gain or they add model noise because they are very high-cardinality (unique). For example, the "Link to Rotten Tomatoes page for the movie" variable would have virtually no model value due to its tangential nature and its high-cardinality - in other words, a URL has no domain context from a decision making perspective.
 
 * Title of movie
 * Studio that produced the movie
@@ -581,7 +580,7 @@ The below explanatory variables will be included in our modeling as they offer t
 
 To build our mulitple linear regression model, we will use stepwise forward selection via the "ols_step_forward" function from the "olsrr" R package. The function will build the model from our set of explanatory variables by entering predictors based on p-values in a stepwise manner. The first variable to be added to the model is most the significant, and more variables are included until none of remaining variables are "significant" when added to the model.
 
-Compared to stepwise backward selection, stepwise forward selection was used for its low computational resource requirements and thus ease of reproducibility. It is worth noting the forward selection key disadvantage, such that each addition of a new variable may undermine the significance of variables already in the model.
+Compared to stepwise backward selection, stepwise forward selection was used for its low resource overhead and thus ease of reproducibility. It is worth noting the forward selection key disadvantage, such that each addition of a new variable may undermine the significance of variables already in the model.
 
 Let's run the model.
 
@@ -765,7 +764,7 @@ ols_step_forward (MultiRegression1, details = TRUE)
 Our model has selected the variables of IMDB Rating, Genre, and the Critics score on Rotten Tomatoes. Let's peform diagnostics to evaluate how well the model fits the data. We will use the standard diagnostic plot set of: 
 
 * Residuals vs. Fitted Values Plot
-* Q-Q Plot
+* Quantile-Quantile (Q-Q) Plot
 * Scale Location Plot
 * Residuals vs. Leverage Plot
 
@@ -782,6 +781,8 @@ MultiRegression2 <- lm(
   data = movies
 )
 ```
+
+Next, we create our plots.
 
 
 ```r
@@ -866,18 +867,20 @@ summary (MultiRegression2)
 ## F-statistic: 176.7 on 12 and 638 DF,  p-value: < 2.2e-16
 ```
 
-Next, let's go over our model coefficients:
+Let's review our coefficients:
 
-* **Intercept**: When all explanatory variables are set to zero, the predicted Audience score on Rotten Tomatoes is -37.15275. This is meaningless because we cannot have a negative Audience Score
-* **imdb_rating**: Holding all other explanatory variables constant, for each 1 point increase in our IMDB Rating, the model predicts that our Audience Score will increase by 14.76 on average
-* **genre**: Note that our reference level for genre is "Action & Adventure" because it is not listed in the output. For the reference level, we would use "0" for all other genre levels to predict the Audience score. For all non-reference levels, we would use "1" for the level of interest and "0" for the other levels. So, all else constant, the model predicts that for each non-reference genre level the Audience score will be the level's coeffcient higher or lower.
-
+* **Intercept**: This is a model coefficient. When all explanatory variables are set to zero, the predicted Audience score on Rotten Tomatoes is -37.15275. This is meaningless because we cannot have a negative Audience Score
+* **imdb_rating**: This is a model coefficient. Holding all other explanatory variables constant, for each 1 point increase in our IMDB Rating, the model predicts that our Audience Score will increase by 14.76 on average
+* **genre**: This is a model coefficient. Note that our reference level for genre is "Action & Adventure" because it is not listed in the output. For the reference level, we would use "0" for all other genre levels to predict the Audience score. For all non-reference levels, we would use "1" for the level of interest and "0" for the other levels. So, all else constant, the model predicts that for each non-reference genre level the Audience score will be the level's coeffcient higher or lower
+* **Std. Error**: The Standard Error represents the average amount the model coefficients differ from the actual average of the response variable
+* **t value**: The t-value tells us the number of standard deviations the model coefficient estimate is from zero
+* **Pr(>|t|)**: The p-value is probability of any value being equal to or larger than t
 
 * * *
 
 ## Part 5: Prediction
 
-At this point, we are ready to test the predictive ability of our multi-regession model. We will use the 2016 Comedy Film "Bad Santa 2" to predict the Rotten Tomatoes Audience Score. 
+At this point, we are ready to test the predictive ability of our multi-regession model. We will use the 2016 comedy film "Bad Santa 2" to predict the Rotten Tomatoes Audience Score. 
 
 Using the URLs https://www.rottentomatoes.com/m/bad_santa_2 and http://www.imdb.com/title/tt1798603/?ref_=ttls_li_tt, we see that our Rotten Tomatoes Critics Score is 23%, and the IMDB rating is 5.6.
 
@@ -896,14 +899,17 @@ predict (MultiRegression2, NewMovie, interval="predict", level = 0.95)
 ## 1 49.16892 29.76966 68.56818
 ```
 
-With the provided variables, the predicted Audience Score is **49.16892** which is generous compared to the actual Audience Score of 34.
+With the provided variables, the predicted Audience Score is **49.16892** which is generous compared to the actual Audience Score of **34**.
 
-The 95% prediction interval of the Audience Score for an IMDB Rating of 5.6, a Critic's Score of 23, and a genre of "Comedy"" is between 29.76966 % and 68.56818 %.
+The 95% prediction interval of the Audience Score for an IMDB Rating of 5.6, a Critic's Score of 23, and a genre of "Comedy" is between 29.76966 % and 68.56818 %. If we were to collect additional sample movie data sets, there is a 95% probability that our provided variables will generate a predicted value within the prediction interval.
 
-
+Our prediction interval width is allowing for a high degree of accuracy, but it is not very precise because it spans almost 40 percentage points. If we are concerned with precision, we may want to select a narrower prediction interval or increase our sample size.
 
 
 * * *
 
 ## Part 6: Conclusion
 
+When looking at any ratings methodology, our desire is to see ratings that do not have inherent bias in so far that we don't have too many critical or complimentary reviews. Our exploratory data analysis indicates that our given sample may actually have a complimentary bias. Therefore, we need to be careful with any inference or modeling applications.
+
+Despite a resulting simple model, additional mulitple regression techniques, such as backward selection, should also be entertained to check model convergence and help refine prediction. We would also want to investigate the sampling method and experiment with larger sample sizes to increase our prediction precision. It is assumed that the IMDB and Rotten Tomatoe APIs would not prohibit us from obtaining an adequately sized data set.
