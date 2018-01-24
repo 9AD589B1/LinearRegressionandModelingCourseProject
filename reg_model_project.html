@@ -1212,7 +1212,17 @@ MultiRegression2 &lt;-<span class="st"> </span><span class="kw">lm</span>(
 </div>
 <div id="part-5-prediction" class="section level2">
 <h2>Part 5: Prediction</h2>
-<p>NOTE: Insert code chunks as needed by clicking on the “Insert a new code chunk” button above. Make sure that your code is visible in the project you submit. Delete this note when before you submit your work.</p>
+<p>At this point, we are ready to test the predictive ability of our multi-regession model. We will use the 2016 Comedy Film “Bad Santa 2” to predict the Rotten Tomatoes Audience Score.</p>
+<p>Using the URLs <a href="https://www.rottentomatoes.com/m/bad_santa_2" class="uri">https://www.rottentomatoes.com/m/bad_santa_2</a> and <a href="http://www.imdb.com/title/tt1798603/?ref_=ttls_li_tt" class="uri">http://www.imdb.com/title/tt1798603/?ref_=ttls_li_tt</a>, we see that our Rotten Tomatoes Critics Score is 23%, and the IMDB rating is 5.6.</p>
+<p>Using R’s “predict” function, let’s run our model.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#Create a data frame for the variables we will pass to the model</span>
+NewMovie &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">imdb_rating =</span> <span class="fl">5.6</span>, <span class="dt">critics_score =</span> <span class="dv">23</span>, <span class="dt">genre =</span> <span class="st">&quot;Comedy&quot;</span> )
+<span class="co">#Predict the Audience score with the provided variables</span>
+<span class="kw">predict</span> (MultiRegression2, NewMovie, <span class="dt">interval=</span><span class="st">&quot;predict&quot;</span>, <span class="dt">level =</span> <span class="fl">0.95</span>)</code></pre></div>
+<pre><code>##        fit      lwr      upr
+## 1 49.16892 29.76966 68.56818</code></pre>
+<p>With the provided variables, the predicted Audience Score is <strong>49.16892</strong> which is generous compared to the actual Audience Score of 34.</p>
+<p>The 95% prediction interval of the Audience Score for an IMDB Rating of 5.6, a Critic’s Score of 23, and a genre of “Comedy”&quot; is between 29.76966 % and 68.56818 %.</p>
 <hr />
 </div>
 <div id="part-6-conclusion" class="section level2">

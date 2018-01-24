@@ -877,9 +877,31 @@ Next, let's go over our model coefficients:
 
 ## Part 5: Prediction
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button above. Make sure that your code is visible in the project you submit. 
-Delete this note when before you submit your work.
+At this point, we are ready to test the predictive ability of our multi-regession model. We will use the 2016 Comedy Film "Bad Santa 2" to predict the Rotten Tomatoes Audience Score. 
+
+Using the URLs https://www.rottentomatoes.com/m/bad_santa_2 and http://www.imdb.com/title/tt1798603/?ref_=ttls_li_tt, we see that our Rotten Tomatoes Critics Score is 23%, and the IMDB rating is 5.6.
+
+Using R's "predict" function, let's run our model.
+
+
+```r
+#Create a data frame for the variables we will pass to the model
+NewMovie <- data.frame(imdb_rating = 5.6, critics_score = 23, genre = "Comedy" )
+#Predict the Audience score with the provided variables
+predict (MultiRegression2, NewMovie, interval="predict", level = 0.95)
+```
+
+```
+##        fit      lwr      upr
+## 1 49.16892 29.76966 68.56818
+```
+
+With the provided variables, the predicted Audience Score is **49.16892** which is generous compared to the actual Audience Score of 34.
+
+The 95% prediction interval of the Audience Score for an IMDB Rating of 5.6, a Critic's Score of 23, and a genre of "Comedy"" is between 29.76966 % and 68.56818 %.
+
+
+
 
 * * *
 
